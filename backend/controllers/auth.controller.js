@@ -1,6 +1,7 @@
 import { MongoNetworkTimeoutError } from "mongodb";
 import bcrypt from "bcryptjs"
 import User from "../models/user.model.js";
+import generateToken from "../utils/generateToken.js";
 
 export const signup=async (req,res)=>{
     try {
@@ -24,20 +25,25 @@ export const signup=async (req,res)=>{
         gender,
         profilePic: gender=="male" ? maleProfilePic :femaleProfilePic
     })
-    await newUser.save();
-    res.status(201).json({
-        _id:newUser._id,
-        fullname:newUser.fullname,
-        username:newUser.username,
-        profilePic:newUser.profilePic
-    })
-    } catch (error) {
+
+    if(newUser){
+        generateToken(newUser._id,res);
+        await newUser.save();
+        res.status(201).json({
+            _id:newUser._id,
+            fullname:newUser.fullname,
+            username:newUser.username,
+            profilePic:newUser.profilePic
+        })
+    }else{
+       return res.json({error:"Invalid user data"});
+    }
+   } catch (error) {
         console.log("Error in signup controller",error.message);
         res.status(500).json({
             error:"Internal errror"
         })
     }
-
     
 }
 export const login=(req,res)=>{
